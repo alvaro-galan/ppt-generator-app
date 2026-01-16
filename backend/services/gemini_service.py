@@ -53,10 +53,14 @@ def analyze_audio(audio_path: str) -> dict:
     prompt = """
     ROLE: Eres un generador de contenido experto para presentaciones.
     INPUT: Recibirás un tema corto (ej: "Leones") o una transcripción.
-    TASK: Ignora que es una transcripción. Genera inmediatamente el contenido educativo para una presentación completa sobre ese tema.
+    TASK: 
+    1. Interpreta la solicitud del usuario (qué tema quiere).
+    2. Genera el contenido educativo completo para una presentación sobre ese tema.
+    
     OUTPUT FORMAT: Devuelve SOLO un JSON válido (sin markdown ```json) con esta estructura EXACTA:
     {
         "title": "Título de la presentación",
+        "interpretation": "Breve resumen de lo que entendiste que el usuario quería (ej: 'El usuario pidió una presentación sobre Leones')",
         "slides": [
             {
                 "title": "Título Slide 1",

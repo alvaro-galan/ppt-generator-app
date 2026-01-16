@@ -105,6 +105,7 @@ def process_audio_presentation(self, audio_path: str, whatsapp_to: str = None):
             "pptx_path": pptx_path, 
             "filename": filename,
             "pdf_filename": pdf_filename,
+            "interpretation": presentation_data.get("interpretation", "AI Analysis complete."),
             "debug_info": {
                 "audio_found": True,
                 "ai_success": True,

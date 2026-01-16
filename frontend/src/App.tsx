@@ -152,6 +152,17 @@ function App() {
           </Button>
         </div>
 
+        {status === 'completed' && interpretation && (
+          <Card className="bg-blue-900/10 border-blue-900/50 text-slate-50">
+            <CardHeader>
+              <CardTitle className="text-lg text-blue-400">AI Interpretation</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-slate-300 italic">"{interpretation}"</p>
+            </CardContent>
+          </Card>
+        )}
+
         {status === 'completed' && (
           <Card className="bg-green-900/10 border-green-900/50 text-slate-50">
             <CardContent className="p-8 flex flex-col items-center gap-4">
