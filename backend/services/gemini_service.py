@@ -28,13 +28,12 @@ def analyze_audio(audio_path: str) -> dict:
         }
 
     # List of models to try in order of preference
-    # Based on available models: gemini-2.0-flash-exp, gemini-1.5-flash...
+    # Based on DEBUG info from API: gemini-2.5-flash, gemini-2.5-pro...
     models_to_try = [
-        'gemini-2.0-flash-exp', 
-        'gemini-1.5-flash', 
-        'gemini-1.5-pro',
-        'gemini-1.5-flash-001',
-        'gemini-1.5-pro-001'
+        'gemini-2.5-flash',
+        'gemini-2.5-pro',
+        'gemini-2.0-flash-exp',
+        'gemini-1.5-flash'
     ]
     
     last_error = None
