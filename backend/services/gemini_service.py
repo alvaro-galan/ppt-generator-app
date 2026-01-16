@@ -1,6 +1,7 @@
 import json
 import os
 from config import Config
+import time
 
 # Safe import for Gemini
 try:
@@ -26,65 +27,79 @@ def analyze_audio(audio_path: str) -> dict:
             "slides": [{"title": "Gemini Library Missing", "bullet_points": ["The AI library failed to load."], "speaker_notes": "Check server logs."}]
         }
 
+    # List of models to try in order of preference
+    models_to_try = ['gemini-1.5-flash-001', 'gemini-1.5-flash', 'gemini-pro']
+    
+    last_error = None
+    
+    # Upload the file ONCE (it can be reused across model calls usually, but let's re-upload to be safe or just upload once)
+    # Actually, upload_file returns a file object that is tied to the account.
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash-latest')
-        
-        # Upload the file
+        print(f"Uploading audio file: {audio_path}")
         audio_file = genai.upload_file(path=audio_path)
-        
-        prompt = """
-        Analyze this audio as a presentation expert. 
-        Return a VALID JSON object (do not wrap in markdown code blocks) with the following structure:
-        {
-            "title": "Presentation Title",
-            "slides": [
-                {
-                    "title": "Slide Title",
-                    "bullet_points": ["Point 1", "Point 2", "Point 3"],
-                    "speaker_notes": "Notes for the speaker"
-                }
-            ]
-        }
-        The tone should be professional. Ensure the output is pure JSON.
-        """
-        
-        response = model.generate_content([prompt, audio_file])
-        
-        # Clean up response text if it contains markdown code blocks
-        text = response.text
-        if text.startswith("```json"):
-            text = text[7:]
-        elif text.startswith("```"):
-            text = text[3:]
-            
-        if text.endswith("```"):
-            text = text[:-3]
-            
-        try:
-            return json.loads(text.strip())
-        except json.JSONDecodeError:
-            # Fallback or error handling
-            print(f"Failed to decode JSON: {text}")
-            return {
-                "title": "Error Generating Presentation",
-                "slides": [
-                    {
-                        "title": "Error",
-                        "bullet_points": ["Could not parse AI response."],
-                        "speaker_notes": f"Raw response: {text}"
-                    }
-                ]
-            }
-            
-    except Exception as e:
-        print(f"Error in analyze_audio: {e}")
+        print(f"Audio uploaded: {audio_file.name}")
+    except Exception as upload_err:
         return {
-            "title": "Processing Error",
-            "slides": [
-                {
-                    "title": "AI Processing Failed",
-                    "bullet_points": [str(e)],
-                    "speaker_notes": "Check server logs for details."
-                }
-            ]
+            "title": "Upload Error",
+            "slides": [{"title": "Audio Upload Failed", "bullet_points": [str(upload_err)], "speaker_notes": "Check API Key and Internet."}]
         }
+
+    prompt = """
+    Analyze this audio as a presentation expert. 
+    Return a VALID JSON object (do not wrap in markdown code blocks) with the following structure:
+    {
+        "title": "Presentation Title",
+        "slides": [
+            {
+                "title": "Slide Title",
+                "bullet_points": ["Point 1", "Point 2", "Point 3"],
+                "speaker_notes": "Notes for the speaker"
+            }
+        ]
+    }
+    The tone should be professional. Ensure the output is pure JSON.
+    """
+
+    for model_name in models_to_try:
+        try:
+            print(f"🔄 Trying Gemini Model: {model_name}...")
+            model = genai.GenerativeModel(model_name)
+            
+            response = model.generate_content([prompt, audio_file])
+            
+            # If we get here, it worked! Process response
+            text = response.text
+            if text.startswith("```json"):
+                text = text[7:]
+            elif text.startswith("```"):
+                text = text[3:]
+            if text.endswith("```"):
+                text = text[:-3]
+                
+            try:
+                result = json.loads(text.strip())
+                print(f"✅ Success with model: {model_name}")
+                return result
+            except json.JSONDecodeError:
+                print(f"❌ Failed to decode JSON from {model_name}")
+                last_error = f"JSON Decode Error with {model_name}"
+                continue # Try next model if JSON fails (unlikely but possible)
+
+        except Exception as e:
+            print(f"⚠️ Model {model_name} failed: {e}")
+            last_error = str(e)
+            # Wait a bit before retry
+            time.sleep(1)
+            continue
+
+    # If all models failed
+    return {
+        "title": "Processing Error",
+        "slides": [
+            {
+                "title": "All AI Models Failed",
+                "bullet_points": [f"Last error: {last_error}", "Tried: " + ", ".join(models_to_try)],
+                "speaker_notes": "Check server logs for details."
+            }
+        ]
+    }
