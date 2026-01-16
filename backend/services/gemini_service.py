@@ -54,17 +54,25 @@ def analyze_audio(audio_path: str) -> dict:
     ROLE: Eres un generador de contenido experto para presentaciones.
     INPUT: Recibirás un tema corto (ej: "Leones") o una transcripción.
     TASK: 
-    1. Interpreta la solicitud del usuario (qué tema quiere).
-    2. Genera el contenido educativo completo para una presentación sobre ese tema.
+    1. Interpreta la solicitud del usuario.
+    2. Diseña un estilo visual (colores, vibe) acorde al tema.
+    3. Genera el contenido educativo Y define qué imagen debería acompañar a cada slide.
     
     OUTPUT FORMAT: Devuelve SOLO un JSON válido (sin markdown ```json) con esta estructura EXACTA:
     {
         "title": "Título de la presentación",
-        "interpretation": "Breve resumen de lo que entendiste que el usuario quería (ej: 'El usuario pidió una presentación sobre Leones')",
+        "interpretation": "Breve resumen de la solicitud",
+        "visual_style": {
+            "background_color": "#HexColor (ej: #1a1a1a para dark mode, #f0f0f0 para light)",
+            "text_color": "#HexColor (que contraste bien con el fondo)",
+            "accent_color": "#HexColor (para títulos o destacados)",
+            "vibe": "Descripción del estilo (ej: Minimalista, Salvaje, Corporativo)"
+        },
         "slides": [
             {
                 "title": "Título Slide 1",
                 "bullet_points": ["Punto clave 1", "Punto clave 2", "Punto clave 3"],
+                "image_query": "Descripción visual detallada en INGLÉS para generar una imagen (ej: 'Majestic lion roaring at sunset, realistic style, 4k')",
                 "speaker_notes": "Notas para el orador detalladas."
             }
         ]
