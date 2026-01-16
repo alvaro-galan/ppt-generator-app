@@ -62,6 +62,9 @@ function App() {
             if (result.status === 'success') {
               setStatus('completed');
               setDownloadFilename(result.filename);
+              if (result.pdf_filename) {
+                setPdfFilename(result.pdf_filename);
+              }
             } else {
               setStatus('error');
               setErrorMsg(result.error || 'Processing failed.');
