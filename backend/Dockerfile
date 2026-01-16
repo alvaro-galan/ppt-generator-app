@@ -11,5 +11,5 @@ COPY . .
 # Expose port 8000
 EXPOSE 8000
 
-# Command to run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# DEBUG MODE: List files and sleep to inspect logs
+CMD ["sh", "-c", "ls -R /app && echo 'Listing complete' && uvicorn main:app --host 0.0.0.0 --port 8000"]
