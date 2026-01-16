@@ -1,16 +1,33 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Request, BackgroundTasks
-from fastapi.responses import JSONResponse, FileResponse
-from fastapi.middleware.cors import CORSMiddleware
-from config import Config
-from tasks import process_audio_presentation
-from utils.whatsapp import send_whatsapp_message, download_media
-import shutil
 import os
-import uuid
-import json
+import sys
+import logging
+
+# Configure basic logging immediately to catch import errors
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+try:
+    from fastapi import FastAPI, UploadFile, File, HTTPException, Request, BackgroundTasks
+    from fastapi.responses import JSONResponse, FileResponse
+    from fastapi.middleware.cors import CORSMiddleware
+    from config import Config
+    from tasks import process_audio_presentation
+    from utils.whatsapp import send_whatsapp_message, download_media
+    import shutil
+    import uuid
+    import json
+except Exception as e:
+    logger.error(f"CRITICAL IMPORT ERROR: {e}")
+    # Keep the container alive to see logs
+    import time
+    time.sleep(3600)
+    sys.exit(1)
 
 # Ensure directories exist
-Config.ensure_dirs()
+try:
+    Config.ensure_dirs()
+except Exception as e:
+    logger.error(f"Error creating directories: {e}")
 
 app = FastAPI(title="Voice-to-Presentation API")
 
@@ -32,32 +49,43 @@ async def upload_audio(file: UploadFile = File(...)):
     """
     Endpoint to upload audio from the web frontend.
     """
-    file_id = str(uuid.uuid4())
-    extension = os.path.splitext(file.filename)[1]
-    file_path = os.path.join(Config.UPLOAD_DIR, f"{file_id}{extension}")
-    
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    try:
+        file_id = str(uuid.uuid4())
+        extension = os.path.splitext(file.filename)[1]
+        if not extension:
+            extension = ".webm" # Default to webm if no extension
+            
+        file_path = os.path.join(Config.UPLOAD_DIR, f"{file_id}{extension}")
         
-    # Trigger background task
-    task = process_audio_presentation.delay(file_path)
-    
-    return {"task_id": task.id, "message": "Processing started"}
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        # Trigger background task
+        task = process_audio_presentation.delay(file_path)
+        
+        return {"task_id": task.id, "message": "Processing started"}
+    except Exception as e:
+        logger.error(f"Error uploading audio: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/task/{task_id}")
 async def get_task_status(task_id: str):
     """
     Check the status of a Celery task.
     """
-    from tasks import celery_app
-    task_result = celery_app.AsyncResult(task_id)
-    
-    response = {
-        "task_id": task_id,
-        "status": task_result.status,
-        "result": task_result.result if task_result.ready() else None
-    }
-    return response
+    try:
+        from tasks import celery_app
+        task_result = celery_app.AsyncResult(task_id)
+        
+        response = {
+            "task_id": task_id,
+            "status": task_result.status,
+            "result": task_result.result if task_result.ready() else None
+        }
+        return response
+    except Exception as e:
+        logger.error(f"Error getting task status: {e}")
+        return {"status": "FAILURE", "error": str(e)}
 
 @app.get("/download/{filename}")
 async def download_pptx(filename: str):
@@ -92,36 +120,40 @@ async def receive_whatsapp_message(request: Request):
     """
     Receives messages from WhatsApp.
     """
-    data = await request.json()
-    
     try:
-        entry = data['entry'][0]
-        changes = entry['changes'][0]
-        value = changes['value']
-        messages = value.get('messages')
+        data = await request.json()
         
-        if messages:
-            message = messages[0]
-            sender_id = message['from']
+        try:
+            entry = data['entry'][0]
+            changes = entry['changes'][0]
+            value = changes['value']
+            messages = value.get('messages')
             
-            if message['type'] == 'audio':
-                audio_id = message['audio']['id']
+            if messages:
+                message = messages[0]
+                sender_id = message['from']
                 
-                # Reply "Processing..."
-                send_whatsapp_message(sender_id, "Processing your audio presentation...")
-                
-                # Download audio
-                audio_filename = f"{audio_id}.ogg"
-                audio_path = os.path.join(Config.UPLOAD_DIR, audio_filename)
-                download_media(audio_id, audio_path)
-                
-                # Trigger background task with WhatsApp recipient
-                process_audio_presentation.delay(audio_path, whatsapp_to=sender_id)
-                
-            else:
-                send_whatsapp_message(sender_id, "Please send an audio message to generate a presentation.")
-                
+                if message['type'] == 'audio':
+                    audio_id = message['audio']['id']
+                    
+                    # Reply "Processing..."
+                    send_whatsapp_message(sender_id, "Processing your audio presentation...")
+                    
+                    # Download audio
+                    audio_filename = f"{audio_id}.ogg"
+                    audio_path = os.path.join(Config.UPLOAD_DIR, audio_filename)
+                    download_media(audio_id, audio_path)
+                    
+                    # Trigger background task with WhatsApp recipient
+                    process_audio_presentation.delay(audio_path, whatsapp_to=sender_id)
+                    
+                else:
+                    send_whatsapp_message(sender_id, "Please send an audio message to generate a presentation.")
+                    
+        except Exception as e:
+            print(f"Error processing webhook logic: {e}")
+            
+        return {"status": "received"}
     except Exception as e:
-        print(f"Error processing webhook: {e}")
-        
-    return {"status": "received"}
+        print(f"Error in webhook endpoint: {e}")
+        return {"status": "error", "detail": str(e)}
