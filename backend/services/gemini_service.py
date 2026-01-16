@@ -27,7 +27,7 @@ def analyze_audio(audio_path: str) -> dict:
         }
 
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-1.5-flash-latest')
         
         # Upload the file
         audio_file = genai.upload_file(path=audio_path)
