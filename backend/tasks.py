@@ -6,6 +6,8 @@ from utils.whatsapp import send_whatsapp_document
 import os
 import uuid
 import logging
+import subprocess
+import traceback
 
 # Configure Logging
 logging.basicConfig(level=logging.INFO)
@@ -16,7 +18,7 @@ celery_app = Celery("worker", broker=Config.REDIS_URL, backend=Config.REDIS_URL)
 @celery_app.task(name="process_audio_presentation", bind=True)
 def process_audio_presentation(self, audio_path: str, whatsapp_to: str = None):
     """
-    Background task to process audio, generate PPTX, and optionally send via WhatsApp.
+    Background task to process audio, generate PPTX, convert to PDF, and optionally send via WhatsApp.
     """
     logger.info(f"🚀 TASK STARTED: Processing {audio_path}")
     
@@ -59,18 +61,10 @@ def process_audio_presentation(self, audio_path: str, whatsapp_to: str = None):
             logger.error(f"❌ Error in generate_pptx: {pptx_error}")
             raise pptx_error
 
-import subprocess
-
-# ... (imports)
-
-@celery_app.task(name="process_audio_presentation", bind=True)
-def process_audio_presentation(self, audio_path: str, whatsapp_to: str = None):
-    # ... (existing code up to PPTX verification) ...
         # Debug: Check if PPTX file exists physically
         if os.path.exists(pptx_path):
             logger.info(f"💾 FILE VERIFIED: {pptx_path} exists on disk. Size: {os.path.getsize(pptx_path)} bytes")
         else:
-            # ... (existing error handling) ...
             return {"status": "error", "error": f"File generated but not found at {pptx_path}"}
         
         # Step 2.5: Convert to PDF
@@ -119,9 +113,7 @@ def process_audio_presentation(self, audio_path: str, whatsapp_to: str = None):
             }
         }
 
-
     except Exception as e:
         logger.error(f"🔥 CRITICAL TASK ERROR: {e}")
-        import traceback
         logger.error(traceback.format_exc())
         return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
