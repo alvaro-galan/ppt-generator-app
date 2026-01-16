@@ -51,19 +51,20 @@ def analyze_audio(audio_path: str) -> dict:
         }
 
     prompt = """
-    Analyze this audio as a presentation expert. 
-    Return a VALID JSON object (do not wrap in markdown code blocks) with the following structure:
+    ROLE: Eres un generador de contenido experto para presentaciones.
+    INPUT: Recibirás un tema corto (ej: "Leones") o una transcripción.
+    TASK: Ignora que es una transcripción. Genera inmediatamente el contenido educativo para una presentación completa sobre ese tema.
+    OUTPUT FORMAT: Devuelve SOLO un JSON válido (sin markdown ```json) con esta estructura EXACTA:
     {
-        "title": "Presentation Title",
+        "title": "Título de la presentación",
         "slides": [
             {
-                "title": "Slide Title",
-                "bullet_points": ["Point 1", "Point 2", "Point 3"],
-                "speaker_notes": "Notes for the speaker"
+                "title": "Título Slide 1",
+                "bullet_points": ["Punto clave 1", "Punto clave 2", "Punto clave 3"],
+                "speaker_notes": "Notas para el orador detalladas."
             }
         ]
     }
-    The tone should be professional. Ensure the output is pure JSON.
     """
 
     for model_name in models_to_try:
