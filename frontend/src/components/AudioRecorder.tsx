@@ -30,7 +30,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecordingComplete }) =>
             <Mic className="h-4 w-4" /> Start Recording
           </Button>
         ) : (
-          <Button onClick={stopRecording} variant="destructive" className="gap-2 bg-red-500 hover:bg-red-600">
+          <Button onClick={stopRecording} className="gap-2 bg-red-500 hover:bg-red-600 text-white">
             <Square className="h-4 w-4" /> Stop Recording
           </Button>
         )}

@@ -125,7 +125,6 @@ function App() {
 
         <div className="flex justify-center">
           <Button 
-            size="lg" 
             className="w-full md:w-auto min-w-[200px] text-lg"
             disabled={!file || status === 'uploading' || status === 'processing'}
             onClick={handleSubmit}
