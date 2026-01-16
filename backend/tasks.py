@@ -24,6 +24,18 @@ def process_audio_presentation(self, audio_path: str, whatsapp_to: str = None):
     if not os.path.exists(audio_path):
         error_msg = f"❌ Audio file not found at: {audio_path}"
         logger.error(error_msg)
+        
+        # DEBUG: List uploads directory to see what IS there
+        try:
+            uploads_dir = os.path.dirname(audio_path)
+            if os.path.exists(uploads_dir):
+                files = os.listdir(uploads_dir)
+                logger.error(f"📂 Directory content of {uploads_dir}: {files}")
+            else:
+                logger.error(f"📂 Directory {uploads_dir} DOES NOT EXIST!")
+        except Exception as list_err:
+            logger.error(f"Could not list directory: {list_err}")
+
         return {"status": "error", "error": error_msg}
 
     try:

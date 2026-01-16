@@ -60,6 +60,12 @@ async def upload_audio(file: UploadFile = File(...)):
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
+        # FIX PERMISSIONS for Docker volumes
+        try:
+            os.chmod(file_path, 0o666) # Read/Write for everyone
+        except Exception as perm_err:
+            logger.warning(f"Could not change permissions for {file_path}: {perm_err}")
+
         # Trigger background task
         task = process_audio_presentation.delay(file_path)
         
