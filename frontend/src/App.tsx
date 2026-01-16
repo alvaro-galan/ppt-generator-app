@@ -149,9 +149,16 @@ function App() {
                 <h3 className="text-xl font-bold text-green-500">Success!</h3>
                 <p className="text-slate-400">Your presentation is ready for download.</p>
               </div>
-              <Button onClick={handleDownload} className="bg-green-600 hover:bg-green-700 text-white">
-                Download .PPTX
-              </Button>
+              <div className="flex gap-4">
+                <Button onClick={handleDownload} className="bg-green-600 hover:bg-green-700 text-white">
+                  Download .PPTX
+                </Button>
+                {pdfFilename && (
+                  <Button onClick={handleDownloadPdf} className="bg-red-600 hover:bg-red-700 text-white">
+                    Download .PDF
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
         )}

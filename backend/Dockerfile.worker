@@ -2,13 +2,15 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Install LibreOffice for PPTX to PDF conversion
+RUN apt-get update && apt-get install -y \
+    libreoffice \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-
-# Worker doesn't need to expose port 8000, but we can leave it or ignore it.
-# The important part is the CMD
 
 CMD ["celery", "-A", "tasks", "worker", "--loglevel=info"]

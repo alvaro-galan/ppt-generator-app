@@ -59,29 +59,58 @@ def process_audio_presentation(self, audio_path: str, whatsapp_to: str = None):
             logger.error(f"❌ Error in generate_pptx: {pptx_error}")
             raise pptx_error
 
+import subprocess
+
+# ... (imports)
+
+@celery_app.task(name="process_audio_presentation", bind=True)
+def process_audio_presentation(self, audio_path: str, whatsapp_to: str = None):
+    # ... (existing code up to PPTX verification) ...
         # Debug: Check if PPTX file exists physically
         if os.path.exists(pptx_path):
             logger.info(f"💾 FILE VERIFIED: {pptx_path} exists on disk. Size: {os.path.getsize(pptx_path)} bytes")
         else:
-            # Try to list directory content to see where it went
-            output_dir = os.path.dirname(pptx_path)
-            if os.path.exists(output_dir):
-                dir_content = os.listdir(output_dir)
-                logger.error(f"❌ FILE MISSING: {pptx_path} not found. Directory {output_dir} contains: {dir_content}")
-            else:
-                logger.error(f"❌ DIRECTORY MISSING: {output_dir} does not exist!")
-            
+            # ... (existing error handling) ...
             return {"status": "error", "error": f"File generated but not found at {pptx_path}"}
         
+        # Step 2.5: Convert to PDF
+        pdf_filename = filename.replace(".pptx", ".pdf")
+        pdf_path = pptx_path.replace(".pptx", ".pdf")
+        output_dir = os.path.dirname(pptx_path)
+        
+        logger.info(f"📄 Step 2.5: Converting to PDF: {pdf_filename}")
+        
+        try:
+            # Run LibreOffice headless conversion
+            cmd = [
+                "libreoffice", "--headless", "--convert-to", "pdf", 
+                "--outdir", output_dir, 
+                pptx_path
+            ]
+            process = subprocess.run(cmd, capture_output=True, text=True)
+            
+            if process.returncode == 0 and os.path.exists(pdf_path):
+                logger.info(f"✅ PDF Generated successfully at {pdf_path}")
+            else:
+                logger.error(f"❌ PDF Conversion failed. Stderr: {process.stderr}")
+                pdf_filename = None # Mark as failed but return PPTX
+                
+        except Exception as pdf_error:
+            logger.error(f"❌ Exception converting to PDF: {pdf_error}")
+            pdf_filename = None
+
         # Step 3: Send via WhatsApp if recipient provided
         if whatsapp_to:
             logger.info(f"📱 Step 3: Sending to WhatsApp {whatsapp_to}")
             send_whatsapp_document(whatsapp_to, pptx_path, filename)
+            if pdf_filename and os.path.exists(pdf_path):
+                 send_whatsapp_document(whatsapp_to, pdf_path, pdf_filename)
             
         return {
             "status": "success", 
             "pptx_path": pptx_path, 
             "filename": filename,
+            "pdf_filename": pdf_filename,
             "debug_info": {
                 "audio_found": True,
                 "ai_success": True,
@@ -89,6 +118,7 @@ def process_audio_presentation(self, audio_path: str, whatsapp_to: str = None):
                 "path": pptx_path
             }
         }
+
 
     except Exception as e:
         logger.error(f"🔥 CRITICAL TASK ERROR: {e}")
