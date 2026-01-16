@@ -9,8 +9,8 @@ class Config:
     WHATSAPP_VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN", "my_secure_verify_token")
     WHATSAPP_API_TOKEN = os.getenv("WHATSAPP_API_TOKEN")
     WHATSAPP_PHONE_NUMBER_ID = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
-    UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
-    OUTPUT_DIR = os.getenv("OUTPUT_DIR", "outputs")
+    UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/app/uploads")
+    OUTPUT_DIR = os.getenv("OUTPUT_DIR", "/app/outputs")
 
     @staticmethod
     def ensure_dirs():

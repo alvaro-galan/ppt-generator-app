@@ -8,3 +8,5 @@ celery>=5.3.6
 requests>=2.31.0
 python-dotenv>=1.0.1
 httpx>=0.26.0
+
+# Force rebuild trigger 2026-01-16
