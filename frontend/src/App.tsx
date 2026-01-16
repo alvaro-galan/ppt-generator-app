@@ -91,32 +91,32 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 py-10 px-4">
+    <div className="min-h-screen bg-white text-slate-900 py-10 px-4">
       <div className="max-w-3xl mx-auto space-y-8">
         <header className="text-center space-y-2">
-          <h1 className="text-4xl font-bold tracking-tight text-blue-500">Voice-to-Presentation</h1>
-          <p className="text-slate-400">Turn your voice into a professional PowerPoint presentation instantly.</p>
+          <h1 className="text-4xl font-bold tracking-tight text-blue-600">VERSION ACTUALIZADA V2</h1>
+          <p className="text-slate-600">Turn your voice into a professional PowerPoint presentation instantly.</p>
         </header>
 
-        <Card className="bg-slate-900 border-slate-800 text-slate-50">
+        <Card className="bg-white border-slate-200 text-slate-900 shadow-lg">
           <CardHeader>
             <CardTitle>1. Provide Audio</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <h3 className="font-medium text-slate-300">Upload Audio File</h3>
+                <h3 className="font-medium text-slate-700">Upload Audio File</h3>
                 <FileUpload onFileSelect={handleFileSelect} />
               </div>
               <div className="space-y-2">
-                <h3 className="font-medium text-slate-300">Record Voice</h3>
-                <div className="h-full border border-slate-800 rounded-lg p-6 flex items-center justify-center bg-slate-950/50">
+                <h3 className="font-medium text-slate-700">Record Voice</h3>
+                <div className="h-full border border-slate-200 rounded-lg p-6 flex items-center justify-center bg-slate-50">
                   <AudioRecorder onRecordingComplete={handleRecordingComplete} />
                 </div>
               </div>
             </div>
             {file && (
-              <div className="bg-blue-900/20 text-blue-200 p-3 rounded-md text-center text-sm border border-blue-900/50">
+              <div className="bg-blue-50 text-blue-800 p-3 rounded-md text-center text-sm border border-blue-200">
                 Selected: {file instanceof File ? file.name : 'Voice Recording'}
               </div>
             )}
