@@ -13,16 +13,21 @@ function App() {
   const [taskId, setTaskId] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'uploading' | 'processing' | 'completed' | 'error'>('idle');
   const [downloadFilename, setDownloadFilename] = useState<string | null>(null);
+  const [pdfFilename, setPdfFilename] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleFileSelect = (selectedFile: File) => {
     setFile(selectedFile);
     setErrorMsg(null);
+    setDownloadFilename(null);
+    setPdfFilename(null);
   };
 
   const handleRecordingComplete = (blob: Blob) => {
     setFile(blob);
     setErrorMsg(null);
+    setDownloadFilename(null);
+    setPdfFilename(null);
   };
 
   const handleSubmit = async () => {
@@ -77,7 +82,6 @@ function App() {
           }
         } catch (error) {
           console.error(error);
-          // Don't stop polling on transient network errors, but maybe limit retries in prod
         }
       }, 2000);
     }
@@ -90,6 +94,12 @@ function App() {
   const handleDownload = () => {
     if (downloadFilename) {
       window.open(`${API_URL}/download/${downloadFilename}`, '_blank');
+    }
+  };
+
+  const handleDownloadPdf = () => {
+    if (pdfFilename) {
+      window.open(`${API_URL}/download/${pdfFilename}`, '_blank');
     }
   };
 
