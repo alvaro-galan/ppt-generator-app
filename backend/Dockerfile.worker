@@ -1,0 +1,14 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+# Worker doesn't need to expose port 8000, but we can leave it or ignore it.
+# The important part is the CMD
+
+CMD ["celery", "-A", "tasks", "worker", "--loglevel=info"]
