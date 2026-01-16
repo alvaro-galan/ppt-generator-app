@@ -92,13 +92,27 @@ def analyze_audio(audio_path: str) -> dict:
             time.sleep(1)
             continue
 
-    # If all models failed
+    # If all models failed, try to list available models for debugging
+    available_models_info = "Could not list models."
+    try:
+        available = []
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                available.append(m.name)
+        available_models_info = "Available: " + ", ".join(available)
+    except Exception as list_err:
+        available_models_info = f"List models failed: {list_err}"
+
     return {
         "title": "Processing Error",
         "slides": [
             {
                 "title": "All AI Models Failed",
-                "bullet_points": [f"Last error: {last_error}", "Tried: " + ", ".join(models_to_try)],
+                "bullet_points": [
+                    f"Last error: {last_error}", 
+                    f"Tried: {', '.join(models_to_try)}",
+                    f"Debug info: {available_models_info}"
+                ],
                 "speaker_notes": "Check server logs for details."
             }
         ]
