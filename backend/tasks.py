@@ -41,6 +41,10 @@ def process_audio_presentation(self, audio_path: str, whatsapp_to: str = None):
         if "title" not in presentation_data:
              logger.error(f"❌ Gemini returned invalid data: {presentation_data}")
              return {"status": "error", "error": "AI failed to extract structure from audio"}
+             
+        if presentation_data.get("title") == "Processing Error":
+             logger.error(f"❌ Gemini Processing Error: {presentation_data}")
+             return {"status": "error", "error": "AI Service Unavailable (Quota or Error). Try again later."}
 
         interpretation = presentation_data.get("interpretation", "Topic identified.")
         
