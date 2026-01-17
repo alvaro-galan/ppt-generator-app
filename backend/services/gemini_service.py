@@ -28,12 +28,12 @@ def analyze_audio(audio_path: str) -> dict:
         }
 
     # List of models to try in order of preference
-    # Based on DEBUG info from API: gemini-2.5-flash, gemini-2.5-pro...
+    # Updated based on availability logs (v1beta/v1)
     models_to_try = [
+        'gemini-2.0-flash',
         'gemini-2.5-flash',
-        'gemini-2.5-pro',
-        'gemini-2.0-flash-exp',
-        'gemini-1.5-flash'
+        'gemini-flash-latest',
+        'gemini-1.5-pro-latest'
     ]
     
     last_error = None
@@ -107,8 +107,14 @@ def analyze_audio(audio_path: str) -> dict:
         except Exception as e:
             print(f"⚠️ Model {model_name} failed: {e}")
             last_error = str(e)
-            # Wait longer before retry to handle rate limits (429)
-            time.sleep(5)
+            
+            # Smart Retry for Rate Limits
+            if "429" in str(e) or "quota" in str(e).lower():
+                 print(f"⏳ Rate Limit Hit on {model_name}. Waiting 15 seconds before next model...")
+                 time.sleep(15)
+            else:
+                 time.sleep(2)
+            
             continue
 
     # If all models failed, try to list available models for debugging
