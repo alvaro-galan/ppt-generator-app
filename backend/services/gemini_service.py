@@ -43,6 +43,16 @@ def analyze_audio(audio_path: str) -> dict:
         print(f"Uploading audio file: {audio_path}")
         audio_file = genai.upload_file(path=audio_path)
         print(f"Audio uploaded: {audio_file.name}")
+        
+        # Wait for file to be active
+        while audio_file.state.name == "PROCESSING":
+            print("⏳ Waiting for audio file to process...")
+            time.sleep(2)
+            audio_file = genai.get_file(audio_file.name)
+            
+        if audio_file.state.name == "FAILED":
+             raise Exception("Audio file processing failed by Google")
+             
     except Exception as upload_err:
         return {
             "title": "Upload Error",
