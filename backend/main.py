@@ -83,10 +83,14 @@ async def get_task_status(task_id: str):
         from tasks import celery_app
         task_result = celery_app.AsyncResult(task_id)
         
+        # When state is PROGRESS, 'info' contains the meta dict
+        # When state is SUCCESS, 'result' contains the return value
+        
         response = {
             "task_id": task_id,
             "status": task_result.status,
-            "result": task_result.result if task_result.ready() else None
+            "result": task_result.result if task_result.ready() else None,
+            "info": task_result.info if isinstance(task_result.info, dict) else str(task_result.info)
         }
         return response
     except Exception as e:

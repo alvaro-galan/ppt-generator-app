@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 import { Button } from './components/ui/button';
 import AudioRecorder from './components/AudioRecorder';
 import FileUpload from './components/FileUpload';
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Loader2, Clock } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -16,6 +16,11 @@ function App() {
   const [pdfFilename, setPdfFilename] = useState<string | null>(null);
   const [interpretation, setInterpretation] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  
+  // Progress State
+  const [statusMessage, setStatusMessage] = useState<string>('Initializing AI...');
+  const [progress, setProgress] = useState<number>(0);
+  const [secondsElapsed, setSecondsElapsed] = useState<number>(0);
 
   const handleFileSelect = (selectedFile: File) => {
     setFile(selectedFile);
@@ -23,6 +28,8 @@ function App() {
     setDownloadFilename(null);
     setPdfFilename(null);
     setInterpretation(null);
+    setProgress(0);
+    setSecondsElapsed(0);
   };
 
   const handleRecordingComplete = (blob: Blob) => {
@@ -31,6 +38,8 @@ function App() {
     setDownloadFilename(null);
     setPdfFilename(null);
     setInterpretation(null);
+    setProgress(0);
+    setSecondsElapsed(0);
   };
 
   const handleSubmit = async () => {
@@ -38,9 +47,10 @@ function App() {
 
     setStatus('uploading');
     setErrorMsg(null);
+    setProgress(0);
+    setSecondsElapsed(0);
 
     const formData = new FormData();
-    // Determine filename
     const filename = file instanceof File ? file.name : 'recording.webm';
     formData.append('file', file, filename);
 
@@ -57,6 +67,18 @@ function App() {
     }
   };
 
+  // Timer Effect
+  useEffect(() => {
+    let timer: ReturnType<typeof setInterval>;
+    if (status === 'processing') {
+      timer = setInterval(() => {
+        setSecondsElapsed(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [status]);
+
+  // Polling Effect
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval>;
 
@@ -64,18 +86,20 @@ function App() {
       intervalId = setInterval(async () => {
         try {
           const response = await axios.get(`${API_URL}/task/${taskId}`);
-          const { status: taskStatus, result } = response.data;
+          const { status: taskStatus, result, info } = response.data;
 
-          if (taskStatus === 'SUCCESS') {
+          if (taskStatus === 'PROGRESS' && info) {
+             if (info.status) setStatusMessage(info.status);
+             if (info.progress) setProgress(info.progress);
+             if (info.interpretation) setInterpretation(info.interpretation);
+          }
+          else if (taskStatus === 'SUCCESS') {
             if (result.status === 'success') {
               setStatus('completed');
               setDownloadFilename(result.filename);
-              if (result.pdf_filename) {
-                setPdfFilename(result.pdf_filename);
-              }
-              if (result.interpretation) {
-                setInterpretation(result.interpretation);
-              }
+              if (result.pdf_filename) setPdfFilename(result.pdf_filename);
+              if (result.interpretation) setInterpretation(result.interpretation);
+              setProgress(100);
             } else {
               setStatus('error');
               setErrorMsg(result.error || 'Processing failed.');
@@ -142,50 +166,74 @@ function App() {
           </CardContent>
         </Card>
 
-        <div className="flex justify-center">
-          <Button 
-            className="w-full md:w-auto min-w-[200px] text-lg"
-            disabled={!file || status === 'uploading' || status === 'processing'}
-            onClick={handleSubmit}
-          >
-            {status === 'uploading' ? (
-              <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Uploading...</>
-            ) : status === 'processing' ? (
-              <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processing AI...</>
-            ) : (
-              'Generate Presentation'
-            )}
-          </Button>
-        </div>
-
-        {status === 'completed' && interpretation && (
-          <Card className="bg-blue-900/10 border-blue-900/50 text-slate-50">
-            <CardHeader>
-              <CardTitle className="text-lg text-blue-400">AI Interpretation</CardTitle>
+        {/* Dynamic Interpretation Box (Shows during processing too) */}
+        {interpretation && (status === 'processing' || status === 'completed') && (
+          <Card className="bg-blue-900/10 border-blue-900/50 text-slate-50 animate-in fade-in duration-500">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg text-blue-400 flex items-center gap-2">
+                 AI Interpretation
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-slate-300 italic">"{interpretation}"</p>
+              <p className="text-slate-300 italic text-lg">"{interpretation}"</p>
             </CardContent>
           </Card>
         )}
 
+        <div className="flex justify-center w-full">
+            {status === 'processing' ? (
+                <Card className="w-full bg-slate-900 border-slate-800">
+                    <CardContent className="p-6 space-y-4">
+                        <div className="flex justify-between items-center text-blue-300">
+                            <span className="flex items-center gap-2 font-medium animate-pulse">
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                                {statusMessage}
+                            </span>
+                            <span className="flex items-center gap-2 text-slate-400 font-mono">
+                                <Clock className="h-4 w-4" />
+                                {secondsElapsed}s
+                            </span>
+                        </div>
+                        <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+                            <div 
+                                className="bg-gradient-to-r from-blue-600 to-cyan-500 h-full rounded-full transition-all duration-500 ease-out" 
+                                style={{ width: `${Math.max(5, progress)}%` }}
+                            ></div>
+                        </div>
+                    </CardContent>
+                </Card>
+            ) : (
+                <Button 
+                    className="w-full md:w-auto min-w-[200px] text-lg h-12"
+                    disabled={!file || status === 'uploading'}
+                    onClick={handleSubmit}
+                >
+                    {status === 'uploading' ? (
+                    <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Uploading...</>
+                    ) : (
+                    'Generate Presentation'
+                    )}
+                </Button>
+            )}
+        </div>
+
         {status === 'completed' && (
-          <Card className="bg-green-900/10 border-green-900/50 text-slate-50">
+          <Card className="bg-green-900/10 border-green-900/50 text-slate-50 animate-in zoom-in-95 duration-300">
             <CardContent className="p-8 flex flex-col items-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
-                <Download className="h-6 w-6" />
+              <div className="h-16 w-16 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 mb-2">
+                <Download className="h-8 w-8" />
               </div>
               <div className="text-center">
-                <h3 className="text-xl font-bold text-green-500">Success!</h3>
-                <p className="text-slate-400">Your presentation is ready for download.</p>
+                <h3 className="text-2xl font-bold text-green-500">Presentation Ready!</h3>
+                <p className="text-slate-400 mt-1">Generated in {secondsElapsed} seconds.</p>
               </div>
-              <div className="flex gap-4">
-                <Button onClick={handleDownload} className="bg-green-600 hover:bg-green-700 text-white">
-                  Download .PPTX
+              <div className="flex flex-col sm:flex-row gap-4 w-full justify-center mt-4">
+                <Button onClick={handleDownload} className="bg-green-600 hover:bg-green-700 text-white h-12 px-8 text-lg w-full sm:w-auto">
+                  Download PowerPoint (.pptx)
                 </Button>
                 {pdfFilename && (
-                  <Button onClick={handleDownloadPdf} className="bg-red-600 hover:bg-red-700 text-white">
-                    Download .PDF
+                  <Button onClick={handleDownloadPdf} className="bg-red-600 hover:bg-red-700 text-white h-12 px-8 text-lg w-full sm:w-auto">
+                    Download PDF (.pdf)
                   </Button>
                 )}
               </div>
