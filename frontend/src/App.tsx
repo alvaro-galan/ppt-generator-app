@@ -91,14 +91,20 @@ function App() {
           if (taskStatus === 'PROGRESS' && info) {
              if (info.status) setStatusMessage(info.status);
              if (info.progress) setProgress(info.progress);
-             if (info.interpretation) setInterpretation(info.interpretation);
+             // Only update interpretation if provided and truthy
+             if (info.interpretation) {
+                setInterpretation(info.interpretation);
+             }
           }
           else if (taskStatus === 'SUCCESS') {
             if (result.status === 'success') {
               setStatus('completed');
               setDownloadFilename(result.filename);
               if (result.pdf_filename) setPdfFilename(result.pdf_filename);
-              if (result.interpretation) setInterpretation(result.interpretation);
+              // Ensure we keep the interpretation
+              if (result.interpretation) {
+                 setInterpretation(result.interpretation);
+              }
               setProgress(100);
             } else {
               setStatus('error');
@@ -123,13 +129,23 @@ function App() {
 
   const handleDownload = () => {
     if (downloadFilename) {
-      window.open(`${API_URL}/download/${downloadFilename}`, '_blank');
+      const link = document.createElement('a');
+      link.href = `${API_URL}/download/${downloadFilename}`;
+      link.download = downloadFilename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 
   const handleDownloadPdf = () => {
     if (pdfFilename) {
-      window.open(`${API_URL}/download/${pdfFilename}`, '_blank');
+      const link = document.createElement('a');
+      link.href = `${API_URL}/download/${pdfFilename}`;
+      link.download = pdfFilename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 
