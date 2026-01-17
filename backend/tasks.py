@@ -2,6 +2,7 @@ from celery import Celery
 from config import Config
 from services.gemini_service import analyze_audio
 from services.pptx_service import generate_pptx
+from services.plus_service import PlusAIService
 from utils.whatsapp import send_whatsapp_document
 import os
 import uuid
@@ -26,18 +27,6 @@ def process_audio_presentation(self, audio_path: str, whatsapp_to: str = None):
     if not os.path.exists(audio_path):
         error_msg = f"❌ Audio file not found at: {audio_path}"
         logger.error(error_msg)
-        
-        # DEBUG: List uploads directory to see what IS there
-        try:
-            uploads_dir = os.path.dirname(audio_path)
-            if os.path.exists(uploads_dir):
-                files = os.listdir(uploads_dir)
-                logger.error(f"📂 Directory content of {uploads_dir}: {files}")
-            else:
-                logger.error(f"📂 Directory {uploads_dir} DOES NOT EXIST!")
-        except Exception as list_err:
-            logger.error(f"Could not list directory: {list_err}")
-
         return {"status": "error", "error": error_msg}
 
     try:
@@ -54,8 +43,31 @@ def process_audio_presentation(self, audio_path: str, whatsapp_to: str = None):
         filename = f"presentation_{uuid.uuid4()}.pptx"
         logger.info(f"🎨 Step 2: Generating PPTX: {filename}")
         
+        # Debug Log for Plus AI Key
+        if Config.PLUSAI_API_KEY:
+             logger.info(f"🔑 PLUSAI_API_KEY detected: {Config.PLUSAI_API_KEY[:5]}***")
+        else:
+             logger.warning("⚠️ PLUSAI_API_KEY is missing or empty.")
+
         try:
-            pptx_path = generate_pptx(presentation_data, filename)
+            if Config.PLUSAI_API_KEY:
+                # Use Plus AI (Professional)
+                logger.info("✨ Using Plus AI API for generation...")
+                # Create a prompt from the title and interpretation
+                prompt_text = (
+                    f"Create a professional, visually engaging presentation about '{presentation_data.get('title', 'Topic')}'.\n\n"
+                    f"Key context and focus: {presentation_data.get('interpretation', '')}.\n\n"
+                    f"Target Audience: General Professional.\n"
+                    f"Tone: Educational and Inspiring."
+                )
+                # Ensure prompt isn't too long or weird characters
+                prompt_text = prompt_text[:2000] 
+                pptx_path = PlusAIService.generate_presentation(prompt_text, filename)
+            else:
+                # Use Local Generator (Basic)
+                logger.info("🛠️ Using Local Generator...")
+                pptx_path = generate_pptx(presentation_data, filename)
+                
             logger.info(f"✅ PPTX Generation called. Returned path: {pptx_path}")
         except Exception as pptx_error:
             logger.error(f"❌ Error in generate_pptx: {pptx_error}")
