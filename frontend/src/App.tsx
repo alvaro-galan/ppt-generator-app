@@ -70,6 +70,9 @@ function App() {
               if (result.pdf_filename) {
                 setPdfFilename(result.pdf_filename);
               }
+              if (result.interpretation) {
+                setInterpretation(result.interpretation);
+              }
             } else {
               setStatus('error');
               setErrorMsg(result.error || 'Processing failed.');
