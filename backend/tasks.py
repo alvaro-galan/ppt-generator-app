@@ -23,6 +23,9 @@ def process_audio_presentation(self, audio_path: str, whatsapp_to: str = None):
     """
     logger.info(f"🚀 TASK STARTED: Processing {audio_path}")
     
+    # Notify Start
+    self.update_state(state='PROGRESS', meta={'status': 'Analyzing audio with Gemini AI...', 'progress': 10})
+    
     # Debug: Check if audio file exists
     if not os.path.exists(audio_path):
         error_msg = f"❌ Audio file not found at: {audio_path}"
@@ -39,6 +42,15 @@ def process_audio_presentation(self, audio_path: str, whatsapp_to: str = None):
              logger.error(f"❌ Gemini returned invalid data: {presentation_data}")
              return {"status": "error", "error": "AI failed to extract structure from audio"}
 
+        interpretation = presentation_data.get("interpretation", "Topic identified.")
+        
+        # Notify Analysis Complete
+        self.update_state(state='PROGRESS', meta={
+            'status': 'Structure generated. Designing slides...',
+            'progress': 30,
+            'interpretation': interpretation
+        })
+
         # Step 2: Generate PPTX
         filename = f"presentation_{uuid.uuid4()}.pptx"
         logger.info(f"🎨 Step 2: Generating PPTX: {filename}")
@@ -53,10 +65,17 @@ def process_audio_presentation(self, audio_path: str, whatsapp_to: str = None):
             if Config.PLUSAI_API_KEY:
                 # Use Plus AI (Professional)
                 logger.info("✨ Using Plus AI API for generation...")
+                
+                self.update_state(state='PROGRESS', meta={
+                    'status': 'Generating professional slides with Plus AI (this takes ~2 mins)...',
+                    'progress': 40,
+                    'interpretation': interpretation
+                })
+                
                 # Create a prompt from the title and interpretation
                 prompt_text = (
                     f"Create a professional, visually engaging presentation about '{presentation_data.get('title', 'Topic')}'.\n\n"
-                    f"Key context and focus: {presentation_data.get('interpretation', '')}.\n\n"
+                    f"Key context and focus: {interpretation}.\n\n"
                     f"Target Audience: General Professional.\n"
                     f"Tone: Educational and Inspiring."
                 )
@@ -66,6 +85,13 @@ def process_audio_presentation(self, audio_path: str, whatsapp_to: str = None):
             else:
                 # Use Local Generator (Basic)
                 logger.info("🛠️ Using Local Generator...")
+                
+                self.update_state(state='PROGRESS', meta={
+                    'status': 'Generating slides and creating AI images locally...',
+                    'progress': 40,
+                    'interpretation': interpretation
+                })
+                
                 pptx_path = generate_pptx(presentation_data, filename)
                 
             logger.info(f"✅ PPTX Generation called. Returned path: {pptx_path}")
@@ -80,6 +106,12 @@ def process_audio_presentation(self, audio_path: str, whatsapp_to: str = None):
             return {"status": "error", "error": f"File generated but not found at {pptx_path}"}
         
         # Step 2.5: Convert to PDF
+        self.update_state(state='PROGRESS', meta={
+            'status': 'Converting presentation to PDF...',
+            'progress': 80,
+            'interpretation': interpretation
+        })
+        
         pdf_filename = filename.replace(".pptx", ".pdf")
         pdf_path = pptx_path.replace(".pptx", ".pdf")
         output_dir = os.path.dirname(pptx_path)
@@ -108,6 +140,11 @@ def process_audio_presentation(self, audio_path: str, whatsapp_to: str = None):
         # Step 3: Send via WhatsApp if recipient provided
         if whatsapp_to:
             logger.info(f"📱 Step 3: Sending to WhatsApp {whatsapp_to}")
+            self.update_state(state='PROGRESS', meta={
+                'status': 'Sending to WhatsApp...',
+                'progress': 95,
+                'interpretation': interpretation
+            })
             send_whatsapp_document(whatsapp_to, pptx_path, filename)
             if pdf_filename and os.path.exists(pdf_path):
                  send_whatsapp_document(whatsapp_to, pdf_path, pdf_filename)
@@ -117,7 +154,7 @@ def process_audio_presentation(self, audio_path: str, whatsapp_to: str = None):
             "pptx_path": pptx_path, 
             "filename": filename,
             "pdf_filename": pdf_filename,
-            "interpretation": presentation_data.get("interpretation", "AI Analysis complete."),
+            "interpretation": interpretation,
             "debug_info": {
                 "audio_found": True,
                 "ai_success": True,
