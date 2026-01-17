@@ -50,29 +50,43 @@ def analyze_audio(audio_path: str) -> dict:
         }
 
     prompt = """
-    ROLE: Eres un generador de contenido experto para presentaciones.
-    INPUT: Recibirás un tema corto (ej: "Leones") o una transcripción.
-    TASK: 
-    1. Interpreta la solicitud del usuario.
-    2. Diseña un estilo visual (colores, vibe) acorde al tema.
-    3. Genera el contenido educativo Y define qué imagen debería acompañar a cada slide.
-    
-    OUTPUT FORMAT: Devuelve SOLO un JSON válido (sin markdown ```json) con esta estructura EXACTA:
+    # ROL
+    Actúa como un Senior Product Marketing Manager y Director de Arte experto en presentaciones B2B de alto impacto (estilo McKinsey/Apple).
+
+    # INPUT
+    Recibirás un archivo de audio. Tu tarea es analizarlo para extraer:
+    - TEMA (De qué se habla)
+    - OBJETIVO (Qué se quiere conseguir, si no es explícito, infiérelo como vender una idea/producto relacionado)
+    - AUDIENCIA (A quién va dirigido, si no es explícito, asume Inversores o Clientes VIP)
+
+    # TAREA
+    Estructura una presentación de ventas profesional.
+    IMPORTANTE: Si el tema es genérico (ej. "Leones"), ÚSALO como metáfora para vender una solución de negocio (ej. "Leones" = "Liderazgo").
+
+    # REGLAS DE ESTRUCTURA
+    1. Genera de 6 a 10 diapositivas.
+    2. Flujo: Gancho -> Problema del Mercado -> Nuestra Solución (El Producto) -> Datos/Pruebas -> Modelo de Negocio -> Equipo -> Cierre.
+    3. Contenido TELEGRÁFICO (Bullet points cortos).
+    4. Para cada slide, define un TIPO DE LAYOUT visual (Title Only, 2-Columns, Big Number, Chart/Graph, Team Grid, Comparison Table).
+
+    # FORMATO DE SALIDA (JSON OBLIGATORIO)
+    Devuelve SOLO un JSON válido con esta estructura:
     {
-        "title": "Título de la presentación",
-        "interpretation": "Breve resumen de la solicitud",
+        "title": "Título de impacto (máx 7 palabras)",
+        "interpretation": "Resumen del TEMA, OBJETIVO y AUDIENCIA detectados.",
         "visual_style": {
-            "background_color": "#HexColor (ej: #1a1a1a para dark mode, #f0f0f0 para light)",
-            "text_color": "#HexColor (que contraste bien con el fondo)",
-            "accent_color": "#HexColor (para títulos o destacados)",
+            "background_color": "#HexColor",
+            "text_color": "#HexColor",
+            "accent_color": "#HexColor",
             "vibe": "Descripción del estilo (ej: Minimalista, Salvaje, Corporativo)"
         },
         "slides": [
             {
-                "title": "Título Slide 1",
-                "bullet_points": ["Punto clave 1", "Punto clave 2", "Punto clave 3"],
-                "image_query": "Descripción visual detallada en INGLÉS para generar una imagen (ej: 'Majestic lion roaring at sunset, realistic style, 4k')",
-                "speaker_notes": "Notas para el orador detalladas."
+                "title": "Título Slide (Orientado a la acción)",
+                "layout_type": "Title Only | 2-Columns | Big Number | Chart/Graph | Team Grid | Comparison Table",
+                "bullet_points": ["Punto clave 1", "Punto clave 2"],
+                "image_query": "Descripción visual detallada en INGLÉS (ELEMENTO VISUAL SUGERIDO + Estilo)",
+                "speaker_notes": "Notas de diseño y discurso."
             }
         ]
     }

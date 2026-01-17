@@ -76,15 +76,23 @@ def process_audio_presentation(self, audio_path: str, whatsapp_to: str = None):
                     'interpretation': interpretation
                 })
                 
-                # Create a prompt from the title and interpretation
+                # Construct a rich prompt based on Gemini's detailed structure
+                slides_content = ""
+                for i, slide in enumerate(presentation_data.get('slides', []), 1):
+                    slides_content += f"\nSlide {i}: {slide.get('title')} ({slide.get('layout_type', 'Standard')})\n"
+                    for point in slide.get('bullet_points', []):
+                        slides_content += f"- {point}\n"
+                    slides_content += f"Visual: {slide.get('image_query')}\n"
+
                 prompt_text = (
-                    f"Create a professional, visually engaging presentation about '{presentation_data.get('title', 'Topic')}'.\n\n"
-                    f"Key context and focus: {interpretation}.\n\n"
-                    f"Target Audience: General Professional.\n"
-                    f"Tone: Educational and Inspiring."
+                    f"Create a high-impact B2B presentation about: {presentation_data.get('title')}.\n"
+                    f"Context: {interpretation}.\n\n"
+                    f"Use this exact structure:\n{slides_content}\n\n"
+                    f"Style: {presentation_data.get('visual_style', {}).get('vibe', 'Professional')}."
                 )
-                # Ensure prompt isn't too long or weird characters
-                prompt_text = prompt_text[:2000] 
+                
+                # Ensure prompt isn't too long (Plus AI limit might be ~4000 chars, let's keep it safe)
+                prompt_text = prompt_text[:3500] 
                 pptx_path = PlusAIService.generate_presentation(prompt_text, filename)
             else:
                 # Use Local Generator (Basic)
