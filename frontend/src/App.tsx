@@ -14,6 +14,7 @@ function App() {
   const [status, setStatus] = useState<'idle' | 'uploading' | 'processing' | 'completed' | 'error'>('idle');
   const [downloadFilename, setDownloadFilename] = useState<string | null>(null);
   const [pdfFilename, setPdfFilename] = useState<string | null>(null);
+  const [interpretation, setInterpretation] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleFileSelect = (selectedFile: File) => {
@@ -21,6 +22,7 @@ function App() {
     setErrorMsg(null);
     setDownloadFilename(null);
     setPdfFilename(null);
+    setInterpretation(null);
   };
 
   const handleRecordingComplete = (blob: Blob) => {
@@ -28,6 +30,7 @@ function App() {
     setErrorMsg(null);
     setDownloadFilename(null);
     setPdfFilename(null);
+    setInterpretation(null);
   };
 
   const handleSubmit = async () => {
