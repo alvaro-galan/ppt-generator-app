@@ -107,8 +107,8 @@ def analyze_audio(audio_path: str) -> dict:
         except Exception as e:
             print(f"⚠️ Model {model_name} failed: {e}")
             last_error = str(e)
-            # Wait a bit before retry
-            time.sleep(1)
+            # Wait longer before retry to handle rate limits (429)
+            time.sleep(5)
             continue
 
     # If all models failed, try to list available models for debugging

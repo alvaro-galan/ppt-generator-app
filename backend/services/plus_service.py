@@ -28,8 +28,8 @@ class PlusAIService:
             json={"prompt": prompt, "numberOfSlides": 8} # Default to ~8 slides
         )
 
-        if response.status_code != 200:
-            raise Exception(f"Plus AI Create Failed: {response.text}")
+        if response.status_code not in [200, 201, 202]:
+            raise Exception(f"Plus AI Create Failed ({response.status_code}): {response.text}")
 
         data = response.json()
         polling_url = data["pollingUrl"]
