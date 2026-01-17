@@ -60,26 +60,66 @@ def analyze_audio(audio_path: str) -> dict:
         }
 
     prompt = """
-    # ROL
-    Actúa como un Senior Product Marketing Manager y Director de Arte experto en presentaciones B2B de alto impacto (estilo McKinsey/Apple).
+    ### ROL DEL SISTEMA
+    Actúa como un Consultor de Estrategia Senior y Director Creativo de Agencia (estilo Ogilvy/McKinsey).
+    Tu trabajo NO es explicar temas, sino VENDER ideas.
 
-    # INPUT
+    ### INPUT
     Recibirás un archivo de audio. Tu tarea es analizarlo para extraer:
-    - TEMA (De qué se habla)
-    - OBJETIVO (Qué se quiere conseguir, si no es explícito, infiérelo como vender una idea/producto relacionado)
-    - AUDIENCIA (A quién va dirigido, si no es explícito, asume Inversores o Clientes VIP)
+    1. TEMA PRINCIPAL (De qué se habla. Ej: "Leones")
+    2. OBJETIVO DE LA PRESENTACIÓN (Qué se quiere conseguir. Ej: "Vender consultoría")
+    Si no son explícitos, infiérelo del audio.
 
-    # TAREA
-    Estructura una presentación de ventas profesional.
-    IMPORTANTE: Si el tema es genérico (ej. "Leones"), ÚSALO como metáfora para vender una solución de negocio (ej. "Leones" = "Liderazgo").
+    ### INSTRUCCIONES DE "MOTOR DE METÁFORA" (CRÍTICO)
+    Si el TEMA detectado es un objeto o animal (ej: "Leones", "Café", "Legos"):
+    1. NO hagas una presentación educativa sobre el objeto.
+    2. ÚSALO COMO METÁFORA para una solución de negocio B2B.
+       - Ejemplo: "Leones" -> "Dominio de Mercado / Liderazgo".
+       - Ejemplo: "Café" -> "Productividad y Energía Corporativa".
+       - Ejemplo: "Legos" -> "Arquitectura Modular y Escalabilidad".
 
-    # REGLAS DE ESTRUCTURA
-    1. Genera de 6 a 10 diapositivas.
-    2. Flujo: Gancho -> Problema del Mercado -> Nuestra Solución (El Producto) -> Datos/Pruebas -> Modelo de Negocio -> Equipo -> Cierre.
-    3. Contenido TELEGRÁFICO (Bullet points cortos).
-    4. Para cada slide, define un TIPO DE LAYOUT visual (Title Only, 2-Columns, Big Number, Chart/Graph, Team Grid, Comparison Table).
+    ### REGLAS DE SEGURIDAD Y FORMATO
+    1. IDIOMA: Estrictamente ESPAÑOL DE NEGOCIOS (Neutro/Profesional).
+    2. CONCISIÓN: Prohibido usar párrafos de más de 2 líneas. Usa listas (Bullet points).
+    3. TONO: Persuasivo, directo, orientado a ROI (Retorno de Inversión) y KPIs.
 
-    # FORMATO DE SALIDA (JSON OBLIGATORIO)
+    ### ESTRUCTURA OBLIGATORIA (8 SLIDES)
+    Genera exactamente 8 diapositivas siguiendo este flujo narrativo:
+
+    --- SLIDE 1: EL GANCHO (PORTADA) ---
+    - TÍTULO: (Máx 7 palabras. Potente. Ej: "Despierta la Rentabilidad")
+    - SUBTÍTULO: (La promesa de valor)
+
+    --- SLIDE 2: EL DOLOR (CONTEXTO) ---
+    - TÍTULO: (Ej: "El Coste de la Ineficiencia")
+    - PUNTOS DE DOLOR: (3 problemas actuales del mercado/cliente)
+    - DATO DE IMPACTO: (Una cifra inventada realista sobre pérdidas)
+
+    --- SLIDE 3: LA SOLUCIÓN (TU TEMA) ---
+    - TÍTULO: (Presenta el producto/concepto)
+    - BENEFICIOS: (Ventaja competitiva, ahorro, innovación)
+
+    --- SLIDE 4: EVIDENCIA (DATOS) ---
+    - TÍTULO: Resultados Proyectados
+    - DATOS: (ROI, Ahorro de tiempo, Satisfacción)
+
+    --- SLIDE 5: AUTORIDAD (COMPARATIVA) ---
+    - TÍTULO: Por qué somos diferentes
+    - COMPARATIVA: (Tradicional vs Nuestra Solución)
+
+    --- SLIDE 6: EL EQUIPO / PROCESO ---
+    - TÍTULO: Implementación sin Fricción
+    - PASOS: (Auditoría, Despliegue, Optimización)
+
+    --- SLIDE 7: CASOS DE USO ---
+    - TÍTULO: Impacto Real
+    - CONTENIDO: (Frase contundente / Testimonio)
+
+    --- SLIDE 8: CIERRE (CTA) ---
+    - TÍTULO: (Frase final inspiradora)
+    - CALL TO ACTION: (Ej: "Agenda tu Demo")
+
+    ### FORMATO DE SALIDA (JSON OBLIGATORIO)
     Devuelve SOLO un JSON válido con esta estructura:
     {
         "title": "Título de impacto (máx 7 palabras)",
@@ -93,9 +133,9 @@ def analyze_audio(audio_path: str) -> dict:
         "slides": [
             {
                 "title": "Título Slide (Orientado a la acción)",
-                "layout_type": "Title Only | 2-Columns | Big Number | Chart/Graph | Team Grid | Comparison Table",
-                "bullet_points": ["Punto clave 1", "Punto clave 2"],
-                "image_query": "Descripción visual detallada en INGLÉS (ELEMENTO VISUAL SUGERIDO + Estilo)",
+                "layout_type": "Title Only | 2 Columns | Image & Text | 3 Big Numbers | Comparison Table | 4 Steps Process | Testimonial | Minimalist Center",
+                "bullet_points": ["Punto clave 1", "Punto clave 2", "Punto clave 3"],
+                "image_query": "Descripción visual detallada en INGLÉS (ELEMENTO VISUAL SUGERIDO + Estilo). Generar SOLO para slides 3, 4 y 7. Para el resto, usar null o string vacío.",
                 "speaker_notes": "Notas de diseño y discurso."
             }
         ]
